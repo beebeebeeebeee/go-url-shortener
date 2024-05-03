@@ -1,4 +1,4 @@
-FROM golang:1.22
+FROM golang:1.22-bullseye as builder
 
 ENV GO111MODULE=on
 
@@ -10,5 +10,11 @@ RUN go mod download
 COPY . .
 RUN go build ./cmd/app/main.go
 
-RUN chmod a+x ./scripts/start_service.sh
-ENTRYPOINT ["./scripts/start_service.sh"]
+FROM ubuntu:22.04
+RUN mkdir /microservice
+WORKDIR /microservice
+COPY --from=builder /microservice/public ./public
+COPY --from=builder /microservice/main .
+COPY --from=builder /microservice/scripts/start_service.sh .
+RUN chmod a+x ./start_service.sh
+ENTRYPOINT ["./start_service.sh"]
